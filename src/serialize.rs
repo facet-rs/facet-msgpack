@@ -5,7 +5,7 @@ use log::trace;
 use std::io::{self, Write};
 
 /// Serializes any Facet type to MessagePack bytes
-pub fn to_vec<'a, T: Facet<'a>>(value: &'a T) -> Vec<u8> {
+pub fn to_vec<'a, T: Facet<'a>>(value: &T) -> Vec<u8> {
     let mut buffer = Vec::new();
     let peek = Peek::new(value);
     let mut serializer = MessagePackSerializer {
