@@ -531,7 +531,7 @@ impl<'input> Decoder<'input> {
                             }
 
                             // Handle tuple variant
-                            facet_core::StructKind::Tuple => {
+                            facet_core::StructKind::Tuple if variant.data.fields.len() > 1 => {
                                 let array_len = self.decode_array_len()?;
                                 let field_count = variant.data.fields.len();
 
@@ -545,6 +545,15 @@ impl<'input> Decoder<'input> {
                                     self.deserialize_value(wip)?;
                                     wip.end()?;
                                 }
+                                return Ok(());
+                            }
+
+                            // Handle wrapped type variant
+                            facet_core::StructKind::Tuple if variant.data.fields.len() == 1 => {
+                                wip.select_nth_variant(0)?;
+                                wip.begin_nth_enum_field(0)?;
+                                self.deserialize_value(wip)?;
+                                wip.end()?;
                                 return Ok(());
                             }
 
