@@ -425,7 +425,8 @@ impl<'input> Decoder<'input> {
         // First check the type system (Type)
         match &shape.ty {
             Type::User(UserType::Struct(struct_type))
-                if struct_type.kind != facet_core::StructKind::Tuple =>
+                if struct_type.kind == facet_core::StructKind::Unit
+                    || struct_type.kind == facet_core::StructKind::Struct =>
             {
                 trace!("Deserializing struct");
                 let map_len = self.decode_map_len()?;
@@ -474,7 +475,8 @@ impl<'input> Decoder<'input> {
                 return Ok(());
             }
             Type::User(facet_core::UserType::Struct(struct_type))
-                if struct_type.kind == facet_core::StructKind::Tuple =>
+                if struct_type.kind == facet_core::StructKind::Tuple
+                    || struct_type.kind == facet_core::StructKind::TupleStruct =>
             {
                 trace!("Deserializing tuple");
                 let array_len = self.decode_array_len()?;
@@ -550,7 +552,7 @@ impl<'input> Decoder<'input> {
 
                             // Handle wrapped type variant
                             facet_core::StructKind::Tuple if variant.data.fields.len() == 1 => {
-                                wip.select_nth_variant(0)?;
+                                wip.select_nth_variant(idx)?;
                                 wip.begin_nth_enum_field(0)?;
                                 self.deserialize_value(wip)?;
                                 wip.end()?;
