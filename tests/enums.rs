@@ -107,3 +107,49 @@ fn msgpack_deserialize_struct_variant() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn msgpack_deserialize_struct_wrapped() -> Result<()> {
+    facet_testhelpers::setup();
+
+    #[derive(Facet, Debug, PartialEq)]
+    struct MadeIGuess {
+        made: String,
+        i: bool,
+        guess: i32,
+    }
+
+    #[derive(Facet, Debug, PartialEq)]
+    #[repr(u8)]
+    #[allow(dead_code)]
+    enum Point {
+        Thing,
+        Well(MadeIGuess),
+        Other(i32),
+    }
+
+    // { "Well": { "made": "in germany", "i": false, "guess": 3 } }
+    let data = [
+        0x81, // Map with 1 element
+        0xa4, 0x57, 0x65, 0x6c, 0x6c, // "Well"
+        0x83, // Map with 3 elements
+        0xa4, 0x6d, 0x61, 0x64, 0x65, // "made"
+        0xaa, 0x69, 0x6e, 0x20, 0x67, 0x65, 0x72, 0x6d, 0x61, 0x6e, 0x79, // "in germany"
+        0xa1, 0x69, // "i"
+        0xc2, // false
+        0xa5, 0x67, 0x75, 0x65, 0x73, 0x73, // "guess"
+        0x03, // 3 (positive fixint)
+    ];
+
+    let point: Point = from_slice(&data)?;
+    assert_eq!(
+        point,
+        Point::Well(MadeIGuess {
+            made: "in germany".to_string(),
+            i: false,
+            guess: 3
+        })
+    );
+
+    Ok(())
+}

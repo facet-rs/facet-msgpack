@@ -425,7 +425,7 @@ impl<'input> Decoder<'input> {
         // First check the type system (Type)
         match &shape.ty {
             Type::User(UserType::Struct(struct_type))
-                if struct_type.kind != facet_core::StructKind::Tuple =>
+                if struct_type.kind == facet_core::StructKind::Struct =>
             {
                 trace!("Deserializing struct");
                 let map_len = self.decode_map_len()?;
@@ -474,7 +474,8 @@ impl<'input> Decoder<'input> {
                 return Ok(());
             }
             Type::User(facet_core::UserType::Struct(struct_type))
-                if struct_type.kind == facet_core::StructKind::Tuple =>
+                if struct_type.kind == facet_core::StructKind::Tuple
+                    || struct_type.kind == facet_core::StructKind::TupleStruct =>
             {
                 trace!("Deserializing tuple");
                 let array_len = self.decode_array_len()?;
@@ -531,7 +532,7 @@ impl<'input> Decoder<'input> {
                             }
 
                             // Handle tuple variant
-                            facet_core::StructKind::Tuple => {
+                            facet_core::StructKind::Tuple if variant.data.fields.len() > 1 => {
                                 let array_len = self.decode_array_len()?;
                                 let field_count = variant.data.fields.len();
 
@@ -545,6 +546,15 @@ impl<'input> Decoder<'input> {
                                     self.deserialize_value(wip)?;
                                     wip.end()?;
                                 }
+                                return Ok(());
+                            }
+
+                            // Handle wrapped type variant
+                            facet_core::StructKind::Tuple if variant.data.fields.len() == 1 => {
+                                wip.select_nth_variant(idx)?;
+                                wip.begin_nth_enum_field(0)?;
+                                self.deserialize_value(wip)?;
+                                wip.end()?;
                                 return Ok(());
                             }
 
@@ -676,13 +686,19 @@ impl<'input> Decoder<'input> {
             }
         } else if let Def::List(_list_def) = shape.def {
             trace!("Deserializing list");
-            let array_len = self.decode_array_len()?;
-            wip.begin_list()?;
 
-            for _ in 0..array_len {
-                wip.begin_list_item()?;
-                self.deserialize_value(wip)?;
-                wip.end()?;
+            if self.peek_nil()? {
+                wip.begin_list()?;
+                self.decode_nil()?;
+            } else {
+                let array_len = self.decode_array_len()?;
+                wip.begin_list()?;
+
+                for _ in 0..array_len {
+                    wip.begin_list_item()?;
+                    self.deserialize_value(wip)?;
+                    wip.end()?;
+                }
             }
         } else if let Def::Option(_option_def) = shape.def {
             trace!("Deserializing option with shape: {shape}");
