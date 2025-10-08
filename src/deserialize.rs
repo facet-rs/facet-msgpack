@@ -425,8 +425,7 @@ impl<'input> Decoder<'input> {
         // First check the type system (Type)
         match &shape.ty {
             Type::User(UserType::Struct(struct_type))
-                if struct_type.kind == facet_core::StructKind::Unit
-                    || struct_type.kind == facet_core::StructKind::Struct =>
+                if struct_type.kind == facet_core::StructKind::Struct =>
             {
                 trace!("Deserializing struct");
                 let map_len = self.decode_map_len()?;
@@ -690,6 +689,7 @@ impl<'input> Decoder<'input> {
 
             if self.peek_nil()? {
                 wip.begin_list()?;
+                self.decode_nil()?;
             } else {
                 let array_len = self.decode_array_len()?;
                 wip.begin_list()?;
