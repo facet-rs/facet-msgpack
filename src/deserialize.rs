@@ -687,13 +687,18 @@ impl<'input> Decoder<'input> {
             }
         } else if let Def::List(_list_def) = shape.def {
             trace!("Deserializing list");
-            let array_len = self.decode_array_len()?;
-            wip.begin_list()?;
 
-            for _ in 0..array_len {
-                wip.begin_list_item()?;
-                self.deserialize_value(wip)?;
-                wip.end()?;
+            if self.peek_nil()? {
+                wip.begin_list()?;
+            } else {
+                let array_len = self.decode_array_len()?;
+                wip.begin_list()?;
+
+                for _ in 0..array_len {
+                    wip.begin_list_item()?;
+                    self.deserialize_value(wip)?;
+                    wip.end()?;
+                }
             }
         } else if let Def::Option(_option_def) = shape.def {
             trace!("Deserializing option with shape: {shape}");
