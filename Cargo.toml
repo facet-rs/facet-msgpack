@@ -16,7 +16,7 @@ keywords = [
 categories = ["encoding", "parsing", "data-structures"]
 
 [dependencies]
-facet-core = { version = "0.28.0" }
+facet-core = { version = "0.31.0" }
 facet-reflect = { version = "0.28.0" }
 log = "0.4.27"
 facet-serialize = { version = "0.28.0" }
