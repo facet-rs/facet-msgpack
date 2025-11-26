@@ -19,7 +19,7 @@ categories = ["encoding", "parsing", "data-structures"]
 facet-core = { version = "0.28.0" }
 facet-reflect = { version = "0.28.0" }
 log = "0.4.27"
-facet-serialize = { version = "0.28.0" }
+facet-serialize = { version = "0.31.0" }
 
 [dev-dependencies]
 facet = { version = "0.28.0" }
